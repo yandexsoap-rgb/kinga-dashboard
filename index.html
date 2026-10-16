@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131c">
+  <title>King Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 20px;
+      font-family: system-ui, sans-serif;
+      background: #10131c; color: #f4f6ff;
+    }
+    h1 { margin-bottom: 5px; }
+    .muted { color: #aab2c5; }
+    .card {
+      background: #1a2030; border: 1px solid #343e52;
+      border-radius: 16px; padding: 18px;
+      margin: 16px 0;
+    }
+    button, .btn {
+      display: inline-block; border: 0; border-radius: 10px;
+      padding: 12px 16px; margin: 5px 3px 5px 0;
+      background: #6c7cff; color: white;
+      font-size: 15px; text-decoration: none;
+    }
+    video { width: 100%; border-radius: 12px; background: #080a10; }
+    #status { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <h1>👑 King Dashboard</h1>
+  <p class="muted">Your personal mobile control panel</p>
+
+  <section class="card">
+    <h2>🕒 Live clock</h2>
+    <h3 id="clock">Loading…</h3>
+    <p class="muted">Local time on your device</p>
+  </section>
+
+  <section class="card">
+    <h2>📷 Camera</h2>
+    <video id="camera" autoplay playsinline muted></video>
+    <p id="cameraStatus" class="muted">Camera is off.</p>
+    <button id="startCamera">Start camera</button>
+    <button id="stopCamera">Stop camera</button>
+    <p class="muted">The preview stays on this device; it is not streamed to the server.</p>
+  </section>
+
+  <section class="card">
+    <h2>🎙️ Microphone test</h2>
+    <button id="startMic">Test microphone</button>
+    <button id="stopMic">Stop microphone</button>
+    <p id="micStatus" class="muted">Microphone is off.</p>
+    <p class="muted">This only checks permission and input locally; it does not record or transmit audio.</p>
+  </section>
+
+  <section class="card">
+    <h2>💬 WhatsApp</h2>
+    <a class="btn" href="https://web.whatsapp.com/" target="_blank" rel="noopener">
+      Open WhatsApp Web
+    </a>
+    <p class="muted">Link your own account using WhatsApp's Linked Devices feature.</p>
+  </section>
+
+  <section class="card">
+    <h2>🔐 Privacy</h2>
+    <p id="status" class="muted">Camera and microphone are off.</p>
+    <p class="muted">Only grant permissions on a device you own or are authorized to use.</p>
+  </section>
+
+  <script>
+    const clock = document.getElementById("clock");
+    function updateClock() {
+      clock.textContent = new Date().toLocaleString();
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    let cameraStream = null;
+    let micStream = null;
+
+    document.getElementById("startCamera").onclick = async () => {
+      const status = document.getElementById("cameraStatus");
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: true, audio: false
+        });
+        document.getElementById("camera").srcObject = cameraStream;
+        status.textContent = "Camera is on. Preview is local to this device.";
+        document.getElementById("status").textContent =
+          "Camera is active; microphone is off unless started separately.";
+      } catch (e) {
+        status.textContent = "Camera unavailable: " + e.message;
+      }
+    };
+
+    document.getElementById("stopCamera").onclick = () => {
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+      document.getElementById("camera").srcObject = null;
+      document.getElementById("cameraStatus").textContent = "Camera is off.";
+      document.getElementById("status").textContent = "Camera is off.";
+    };
+
+    document.getElementById("startMic").onclick = async () => {
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: true, video: false
+        });
+        document.getElementById("micStatus").textContent =
+          "Microphone permission granted. No audio is recorded or transmitted.";
+        document.getElementById("status").textContent =
+          "Microphone is active for local testing.";
+      } catch (e) {
+        document.getElementById("micStatus").textContent =
+          "Microphone unavailable: " + e.message;
+      }
+    };
+
+    document.getElementById("stopMic").onclick = () => {
+      if (micStream) micStream.getTracks().forEach(t => t.stop());
+      micStream = null;
+      document.getElementById("micStatus").textContent = "Microphone is off.";
+      document.getElementById("status").textContent = "Microphone is off.";
+    };
+  </script>
+</body>
+  </html>
